@@ -28,6 +28,9 @@
                         }
                     ],
                     "samples": [
+                        "suggest {genre} movie",
+                        "suggest any {genre} movie",
+                        "suggest some {genre} movie",
                         "some  best movies in {genre}",
                         "how about the best movies in {genre}",
                         "something  in {genre} please ",
@@ -299,11 +302,9 @@
                             "name": {
                                 "value": "any",
                                 "synonyms": [
+                                    "any random",
                                     "your best",
                                     "anything",
-                                    "most popular",
-                                    "highest rated",
-                                    "the best",
                                     "some good",
                                     "random"
                                 ]
