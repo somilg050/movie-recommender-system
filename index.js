@@ -3,26 +3,30 @@
 
 const Alexa = require('ask-sdk-core');
 
-// const genre_code = {
-//   ' 28' :'action',
-//   ' 12' :'adventure',
-//   '16' :'animation',
-//   '35':'comedy',
-//   '80':'crime',
-//   ' 99':'documentary',
-//   ' 18':'drama',
-//   '10751':'family',
-//   '14':'fantasy',
-//   '27':'horror',
-//   '53':'thriller',
-//   '10752':'war' ,
-//   '36':'history',
-//   '10402':'music',
-//   '9648':'mystery',
-//   '10749':'romance',
-//   '37':'western',
-//   '878':'science-fiction',
-// };
+const genre_code = {
+  '28' :'action',
+  '12' :'adventure',
+  '16' :'animation',
+  '35':'comedy',
+  '80':'crime',
+  '99':'documentary',
+  '18':'drama',
+  '10751':'family',
+  '14':'fantasy',
+  '27':'horror',
+  '53':'thriller',
+  '10752':'war' ,
+  '36':'history',
+  '10402':'music',
+  '9648':'mystery',
+  '10749':'romance',
+  '37':'western',
+  '878':'science-fiction',
+};
+
+var RandomInt = (min, max) => {
+		return Math.floor(Math.random()*(max-min+1)+min);
+};
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
@@ -56,7 +60,7 @@ var currentFormattedDate = currentYear + '-'+ currentMonth + '-'+ currentDay;
 var nextFormattedDate = nextYear + '-'+ nextMonth + '-'+ nextDay;
 
 
-const GetRemoteDataHandler = {
+const UpcomingMovieHandler = {
   canHandle(handlerInput) {
     return (handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && handlerInput.requestEnvelope.request.intent.name === 'upcomingMovie');
@@ -119,7 +123,7 @@ const MovieDescriptionHandler = {
     SessionAttributes.lastStatement = outputSpeech;
     return handlerInput.responseBuilder
       .speak(outputSpeech)
-      .withShouldEndSession(true)
+      .withShouldEndSession(false)
       .getResponse();
   },
 };
@@ -134,16 +138,23 @@ const MovieSuggestIntentHandler = {
     let genreId = handlerInput.requestEnvelope.request.intent.slots.genre.resolutions.resolutionsPerAuthority[0].values[0].value.id;
     
     const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-    sessionAttributes.genre = genreSlot;
-    handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-    sessionAttributes.genreId = genreId;
-    
-    let speechText = `Here are your movie recommendations in ${genreSlot} genre: `;
+    let speechText;
     URL+=`/discover/movie?api_key=${APIKEY}`;
     URL+=`&page=1`;
     URL+=`&with_original_language=en`;
-    URL+=`&with_genres=${genreId}`;
-    
+
+    if(genreId != 0){
+      speechText = `Here are your movie recommendations in ${genreSlot} genre: `;
+      URL+=`&with_genres=${genreId}`;
+    }
+    else{
+      speechText = `Here are your movie recommendations: `;
+      var Keys = Object.keys(genre_code);
+      var Size = Keys.length;
+      var choice = Keys[RandomInt(0, Size-1)];
+      URL+=`&with_genres=${choice}`;
+    }
+
     await getRemoteData(URL)
     .then((response) => {
       const data = JSON.parse(response);
@@ -162,6 +173,7 @@ const MovieSuggestIntentHandler = {
     .catch(function(error){
       console.log(error);
     });
+    sessionAttributes.lastStatement = speechText;
     return handlerInput.responseBuilder
     .speak(speechText)
     .reprompt(speechText)
@@ -259,7 +271,7 @@ const skillBuilder = Alexa.SkillBuilders.custom();
 
 exports.handler = skillBuilder
   .addRequestHandlers(
-    GetRemoteDataHandler,
+    UpcomingMovieHandler,
     LaunchRequestHandler,
     MovieDescriptionHandler,
     MovieSuggestIntentHandler,
