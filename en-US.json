@@ -181,6 +181,22 @@
                         "give me description of {movieName}",
                         "tell me about {movieName}"
                     ]
+                },
+                {
+                    "name": "similarMovie",
+                    "slots": [
+                        {
+                            "name": "movieName",
+                            "type": "AMAZON.Movie"
+                        }
+                    ],
+                    "samples": [
+                        "Can you tell me some more movies with story like {movieName}",
+                        "List out the movies related to {movieName}",
+                        "Tell me some movies like {movieName}",
+                        "What are some movies similar to {movieName}",
+                        "What are some movies like {movieName}"
+                    ]
                 }
             ],
             "types": [

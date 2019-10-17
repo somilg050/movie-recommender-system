@@ -182,6 +182,60 @@ const MovieSuggestIntentHandler = {
   },
 };
 
+const SimilarMoviesHandler = {
+  canHandle(handlerInput) {
+    return (handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'similarMovie');
+  },
+  async handle(handlerInput) {
+    var movieName=handlerInput.requestEnvelope.request.intent.slots.movieName.value; // Getting movieName from the slot
+    var SessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    // console.log(movieName);
+    // Building URL for API
+    var queryURL = URL; // URL for searching similar movies
+    queryURL+= `/movie`;
+    // // var queryURL
+    URL+=`/search/movie?api_key=${APIKEY}`; // URL for getting movieID
+    URL+=`&page=1`;
+    URL+=`&language=en-US`;
+    URL+=`&query=${movieName}`;
+    
+    
+    var movieId; 
+    
+    await getRemoteData(URL)
+      .then((response) => {
+        // Building response from API Response
+        const data = JSON.parse(response);
+        movieId = data.results[0].id;
+    });
+    
+    queryURL+=`/${movieId}/similar?api_key=${APIKEY}&language=en-US`;
+    let speechText = `Here are your movie recommendations similar to ${movieName} genre: `;
+    await getRemoteData(queryURL)
+    .then((response) => {
+      const data = JSON.parse(response);
+      var i=0;
+      while(i<4){
+        if(i===3){
+          speechText+=' and ';
+        }
+        var movieTitle = data.results[i].title;
+        speechText += `${movieTitle}`;
+        if(i<2)speechText+=', ';
+        i++;
+        if(i===3)speechText+='.';
+      }
+    })
+      
+    SessionAttributes.lastStatement = speechText;
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
 const HelpIntentHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
@@ -275,6 +329,7 @@ exports.handler = skillBuilder
     LaunchRequestHandler,
     MovieDescriptionHandler,
     MovieSuggestIntentHandler,
+    SimilarMoviesHandler,
     HelpIntentHandler,
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler,
