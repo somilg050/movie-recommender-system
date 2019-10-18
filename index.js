@@ -134,25 +134,29 @@ const MovieSuggestIntentHandler = {
       && handlerInput.requestEnvelope.request.intent.name === 'movieIntent';
   },
   async handle(handlerInput){
-    let genreSlot = handlerInput.requestEnvelope.request.intent.slots['genre'].value;
-    let genreId = handlerInput.requestEnvelope.request.intent.slots.genre.resolutions.resolutionsPerAuthority[0].values[0].value.id;
-    
-    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-    let speechText;
+    let speechText = `Here are your movie recommendations: `;
     URL+=`/discover/movie?api_key=${APIKEY}`;
     URL+=`&page=1`;
     URL+=`&with_original_language=en`;
-
-    if(genreId != 0){
-      speechText = `Here are your movie recommendations in ${genreSlot} genre: `;
-      URL+=`&with_genres=${genreId}`;
+    if(handlerInput.requestEnvelope.request.intent.slots.genre.value){
+      let genreSlot = handlerInput.requestEnvelope.request.intent.slots['genre'].value;
+      let genreId = handlerInput.requestEnvelope.request.intent.slots.genre.resolutions.resolutionsPerAuthority[0].values[0].value.id;
+      if(genreId != 0){
+        speechText = `Here are your movie recommendations in ${genreSlot} genre: `;
+        URL+=`&with_genres=${genreId}`;
+      }
+      else{
+        var Keys = Object.keys(genre_code);
+        var Size = Keys.length;
+        var choice = Keys[RandomInt(0, Size-1)];
+        URL+=`&with_genres=${choice}`;
+      }
     }
-    else{
-      speechText = `Here are your movie recommendations: `;
-      var Keys = Object.keys(genre_code);
-      var Size = Keys.length;
-      var choice = Keys[RandomInt(0, Size-1)];
-      URL+=`&with_genres=${choice}`;
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+    if(handlerInput.requestEnvelope.request.intent.slots.year.value){
+      var releaseYear = handlerInput.requestEnvelope.request.intent.slots.year.value;
+      URL+=`&primary_release_year=${releaseYear}`;
     }
 
     await getRemoteData(URL)
@@ -167,7 +171,7 @@ const MovieSuggestIntentHandler = {
         speechText += `${movieTitle}`;
         if(i<2)speechText+=', ';
         i++;
-        if(i===3)speechText+='.';
+        if(i===4)speechText+='.';
       }
     })
     .catch(function(error){
@@ -199,17 +203,17 @@ const SimilarMoviesHandler = {
     URL+=`&page=1`;
     URL+=`&language=en-US`;
     URL+=`&query=${movieName}`;
-    
-    
+
+
     var movieId; 
-    
+
     await getRemoteData(URL)
       .then((response) => {
         // Building response from API Response
         const data = JSON.parse(response);
         movieId = data.results[0].id;
     });
-    
+
     queryURL+=`/${movieId}/similar?api_key=${APIKEY}&language=en-US`;
     let speechText = `Here are your movie recommendations similar to ${movieName} genre: `;
     await getRemoteData(queryURL)
@@ -226,8 +230,8 @@ const SimilarMoviesHandler = {
         i++;
         if(i===3)speechText+='.';
       }
-    })
-      
+    });
+
     SessionAttributes.lastStatement = speechText;
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -235,6 +239,7 @@ const SimilarMoviesHandler = {
       .getResponse();
   },
 };
+
 
 const HelpIntentHandler = {
   canHandle(handlerInput) {
@@ -246,6 +251,7 @@ const HelpIntentHandler = {
     return handlerInput.responseBuilder
       .speak(speechText)
       .reprompt(speechText)
+      .withShouldEndSession(false)
       .getResponse();
   },
 };
@@ -328,8 +334,8 @@ exports.handler = skillBuilder
     UpcomingMovieHandler,
     LaunchRequestHandler,
     MovieDescriptionHandler,
-    MovieSuggestIntentHandler,
     SimilarMoviesHandler,
+    MovieSuggestIntentHandler,
     HelpIntentHandler,
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler,
