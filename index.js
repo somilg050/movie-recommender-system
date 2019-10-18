@@ -3,26 +3,30 @@
 
 const Alexa = require('ask-sdk-core');
 
-// const genre_code = {
-//   ' 28' :'action',
-//   ' 12' :'adventure',
-//   '16' :'animation',
-//   '35':'comedy',
-//   '80':'crime',
-//   ' 99':'documentary',
-//   ' 18':'drama',
-//   '10751':'family',
-//   '14':'fantasy',
-//   '27':'horror',
-//   '53':'thriller',
-//   '10752':'war' ,
-//   '36':'history',
-//   '10402':'music',
-//   '9648':'mystery',
-//   '10749':'romance',
-//   '37':'western',
-//   '878':'science-fiction',
-// };
+const genre_code = {
+  '28' :'action',
+  '12' :'adventure',
+  '16' :'animation',
+  '35':'comedy',
+  '80':'crime',
+  '99':'documentary',
+  '18':'drama',
+  '10751':'family',
+  '14':'fantasy',
+  '27':'horror',
+  '53':'thriller',
+  '10752':'war' ,
+  '36':'history',
+  '10402':'music',
+  '9648':'mystery',
+  '10749':'romance',
+  '37':'western',
+  '878':'science-fiction',
+};
+
+var RandomInt = (min, max) => {
+		return Math.floor(Math.random()*(max-min+1)+min);
+};
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
@@ -56,7 +60,7 @@ var currentFormattedDate = currentYear + '-'+ currentMonth + '-'+ currentDay;
 var nextFormattedDate = nextYear + '-'+ nextMonth + '-'+ nextDay;
 
 
-const GetRemoteDataHandler = {
+const UpcomingMovieHandler = {
   canHandle(handlerInput) {
     return (handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && handlerInput.requestEnvelope.request.intent.name === 'upcomingMovie');
@@ -83,7 +87,10 @@ const GetRemoteDataHandler = {
           if(i<2)outputSpeech+=', ';
           i++;
         }
+        SessionAttributes.data = data;
       });
+    outputSpeech += "Would you like to here more?";
+    SessionAttributes.count = 4;
     SessionAttributes.lastStatement = outputSpeech;
     return handlerInput.responseBuilder
       .speak(outputSpeech)
@@ -119,7 +126,38 @@ const MovieDescriptionHandler = {
     SessionAttributes.lastStatement = outputSpeech;
     return handlerInput.responseBuilder
       .speak(outputSpeech)
-      .withShouldEndSession(true)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const YesHandler = {
+  canHandle(handlerInput) {
+    const request = handlerInput.requestEnvelope.request;
+    return request.type === 'IntentRequest' && (request.intent.name === 'AMAZON.YesIntent');
+  },
+  handle(handlerInput) {
+    var outputSpeech;
+    var SessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var i=SessionAttributes.count;
+    var lim=i+3;
+    outputSpeech = "Some other movies are "  + SessionAttributes.data.results[i].original_title;
+    i++;
+        while (i<lim)
+        {
+          if (i==(lim-1))
+            outputSpeech +=  " and " + SessionAttributes.data.results[i].original_title + ".";
+          else
+            outputSpeech +=  " , " + SessionAttributes.data.results[i].original_title;
+          i++;
+        }
+    outputSpeech += "Would you like to here more?";
+    
+    SessionAttributes.count += 3;
+    SessionAttributes.lastStatement = outputSpeech;
+    return handlerInput.responseBuilder
+      .speak(outputSpeech)
+      .withShouldEndSession(false)
       .getResponse();
   },
 };
@@ -130,21 +168,108 @@ const MovieSuggestIntentHandler = {
       && handlerInput.requestEnvelope.request.intent.name === 'movieIntent';
   },
   async handle(handlerInput){
-    let genreSlot = handlerInput.requestEnvelope.request.intent.slots['genre'].value;
-    let genreId = handlerInput.requestEnvelope.request.intent.slots.genre.resolutions.resolutionsPerAuthority[0].values[0].value.id;
-    
-    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-    sessionAttributes.genre = genreSlot;
-    handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-    sessionAttributes.genreId = genreId;
-    
-    let speechText = `Here are your movie recommendations in ${genreSlot} genre: `;
+    let speechText = `Here are your movie recommendations: `;
     URL+=`/discover/movie?api_key=${APIKEY}`;
     URL+=`&page=1`;
     URL+=`&with_original_language=en`;
-    URL+=`&with_genres=${genreId}`;
-    
+    if(handlerInput.requestEnvelope.request.intent.slots.genre.value){
+      let genreSlot = handlerInput.requestEnvelope.request.intent.slots['genre'].value;
+      let genreId = handlerInput.requestEnvelope.request.intent.slots.genre.resolutions.resolutionsPerAuthority[0].values[0].value.id;
+      if(genreId != 0){
+        speechText = `Here are your movie recommendations in ${genreSlot} genre: `;
+        URL+=`&with_genres=${genreId}`;
+      }
+      else{
+        var Keys = Object.keys(genre_code);
+        var Size = Keys.length;
+        var choice = Keys[RandomInt(0, Size-1)];
+        URL+=`&with_genres=${choice}`;
+      }
+    }
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+    if(handlerInput.requestEnvelope.request.intent.slots.year.value){
+      var releaseYear = handlerInput.requestEnvelope.request.intent.slots.year.value;
+      URL+=`&primary_release_year=${releaseYear}`;
+    }
+
+    if(handlerInput.requestEnvelope.request.intent.slots.Actor.value){
+      var actorName=handlerInput.requestEnvelope.request.intent.slots.Actor.value; // Getting actorName from the slot
+      var actorId;
+      // Building URL for API to get Actor ID
+      var URLtemp =`https://api.themoviedb.org/3/search/person?api_key=${APIKEY}`; 
+      URLtemp+=`&page=1`;
+      URLtemp+=`&language=en-US`;
+      URLtemp+=`&query=${actorName}`;
+      await getRemoteData(URLtemp)
+      .then((response) => {
+        data = JSON.parse(response);
+        actorId = data.results[0].id;
+      });
+      Url+=`&with_cast=${actorId}`;
+    }
+
     await getRemoteData(URL)
+    .then((response) => {
+      const data = JSON.parse(response);
+      var i=0;
+      while(i<4){
+        if(i===3){
+          speechText+=' and ';
+        }
+        var movieTitle = data.results[i].title;
+        speechText += `${movieTitle}`;
+        if(i<2)speechText+=', ';
+        i++;
+        if(i===4)speechText+='.';
+      }
+      SessionAttributes.data = data;
+    })
+    .catch(function(error){
+      console.log(error);
+    });
+    outputSpeech += "Would you like to here more?";
+    SessionAttributes.count = 4;
+    sessionAttributes.lastStatement = speechText;
+    return handlerInput.responseBuilder
+    .speak(speechText)
+    .reprompt(speechText)
+    .withShouldEndSession(false)
+    .getResponse();
+  },
+};
+
+const SimilarMoviesHandler = {
+  canHandle(handlerInput) {
+    return (handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'similarMovie');
+  },
+  async handle(handlerInput) {
+    var movieName=handlerInput.requestEnvelope.request.intent.slots.movieName.value; // Getting movieName from the slot
+    var SessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    // console.log(movieName);
+    // Building URL for API
+    var queryURL = URL; // URL for searching similar movies
+    queryURL+= `/movie`;
+    // // var queryURL
+    URL+=`/search/movie?api_key=${APIKEY}`; // URL for getting movieID
+    URL+=`&page=1`;
+    URL+=`&language=en-US`;
+    URL+=`&query=${movieName}`;
+
+
+    var movieId; 
+
+    await getRemoteData(URL)
+      .then((response) => {
+        // Building response from API Response
+        const data = JSON.parse(response);
+        movieId = data.results[0].id;
+    });
+
+    queryURL+=`/${movieId}/similar?api_key=${APIKEY}&language=en-US`;
+    let speechText = `Here are your movie recommendations similar to ${movieName} genre: `;
+    await getRemoteData(queryURL)
     .then((response) => {
       const data = JSON.parse(response);
       var i=0;
@@ -158,17 +283,18 @@ const MovieSuggestIntentHandler = {
         i++;
         if(i===3)speechText+='.';
       }
-    })
-    .catch(function(error){
-      console.log(error);
+      SessionAttributes.data = data;
     });
+    outputSpeech += "Would you like to here more?";
+    SessionAttributes.count = 4;
+    SessionAttributes.lastStatement = speechText;
     return handlerInput.responseBuilder
-    .speak(speechText)
-    .reprompt(speechText)
-    .withShouldEndSession(false)
-    .getResponse();
+      .speak(speechText)
+      .withShouldEndSession(false)
+      .getResponse();
   },
 };
+
 
 const HelpIntentHandler = {
   canHandle(handlerInput) {
@@ -180,6 +306,7 @@ const HelpIntentHandler = {
     return handlerInput.responseBuilder
       .speak(speechText)
       .reprompt(speechText)
+      .withShouldEndSession(false)
       .getResponse();
   },
 };
@@ -259,14 +386,16 @@ const skillBuilder = Alexa.SkillBuilders.custom();
 
 exports.handler = skillBuilder
   .addRequestHandlers(
-    GetRemoteDataHandler,
+    UpcomingMovieHandler,
     LaunchRequestHandler,
     MovieDescriptionHandler,
+    SimilarMoviesHandler,
     MovieSuggestIntentHandler,
     HelpIntentHandler,
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler,
     RepeatHandler,
+    YesHandler,
   )
   .addErrorHandlers(ErrorHandler)
   .lambda();
