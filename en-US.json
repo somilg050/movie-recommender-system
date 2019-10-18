@@ -25,9 +25,27 @@
                         {
                             "name": "genre",
                             "type": "genre"
+                        },
+                        {
+                            "name": "year",
+                            "type": "AMAZON.DATE"
+                        },
+                        {
+                            "name": "actor",
+                            "type": "AMAZON.Actor"
                         }
                     ],
                     "samples": [
+                        "suggest some movies by {actor}",
+                        "What are the best {genre} that were released {year} ",
+                        "best movies from year {year}",
+                        "suggest movies from {year}",
+                        "suggest {genre} movie from {year}",
+                        "best movies in {genre} from {year}",
+                        "best movies from {year}",
+                        "suggest {genre} movie",
+                        "suggest any {genre} movie",
+                        "suggest some {genre} movie",
                         "some  best movies in {genre}",
                         "how about the best movies in {genre}",
                         "something  in {genre} please ",
@@ -178,6 +196,22 @@
                         "give me description of {movieName}",
                         "tell me about {movieName}"
                     ]
+                },
+                {
+                    "name": "similarMovie",
+                    "slots": [
+                        {
+                            "name": "movieName",
+                            "type": "AMAZON.Movie"
+                        }
+                    ],
+                    "samples": [
+                        "Can you tell me some more movies with story like {movieName}",
+                        "List out the movies related to {movieName}",
+                        "Tell me some movies like {movieName}",
+                        "What are some movies similar to {movieName}",
+                        "What are some movies like {movieName}"
+                    ]
                 }
             ],
             "types": [
@@ -187,19 +221,28 @@
                         {
                             "id": "37",
                             "name": {
-                                "value": "western"
+                                "value": "western",
+                                "synonyms": [
+                                    "westerns"
+                                ]
                             }
                         },
                         {
                             "id": "10752",
                             "name": {
-                                "value": "war"
+                                "value": "war",
+                                "synonyms": [
+                                    "wars"
+                                ]
                             }
                         },
                         {
                             "id": "9648",
                             "name": {
-                                "value": "mystery"
+                                "value": "mystery",
+                                "synonyms": [
+                                    "mysterious"
+                                ]
                             }
                         },
                         {
@@ -207,6 +250,7 @@
                             "name": {
                                 "value": "music",
                                 "synonyms": [
+                                    "musically",
                                     "musical"
                                 ]
                             }
@@ -214,7 +258,10 @@
                         {
                             "id": "36",
                             "name": {
-                                "value": "history"
+                                "value": "history",
+                                "synonyms": [
+                                    "historic"
+                                ]
                             }
                         },
                         {
@@ -222,6 +269,7 @@
                             "name": {
                                 "value": "drama",
                                 "synonyms": [
+                                    "dramas",
                                     "dramatic",
                                     "melodramatic"
                                 ]
@@ -230,13 +278,20 @@
                         {
                             "id": "99",
                             "name": {
-                                "value": "documentary"
+                                "value": "documentary",
+                                "synonyms": [
+                                    "documentaries"
+                                ]
                             }
                         },
                         {
                             "id": "80",
                             "name": {
-                                "value": "crime"
+                                "value": "crime",
+                                "synonyms": [
+                                    "crimes",
+                                    "criminal"
+                                ]
                             }
                         },
                         {
@@ -244,6 +299,7 @@
                             "name": {
                                 "value": "adventure",
                                 "synonyms": [
+                                    "adventurous",
                                     "interesting"
                                 ]
                             }
@@ -269,6 +325,7 @@
                             "name": {
                                 "value": "comedy",
                                 "synonyms": [
+                                    "comedies",
                                     "chill",
                                     "lite",
                                     "funny"
@@ -290,6 +347,7 @@
                             "name": {
                                 "value": "fantasy",
                                 "synonyms": [
+                                    "fantasies",
                                     "imaginative"
                                 ]
                             }
@@ -299,11 +357,9 @@
                             "name": {
                                 "value": "any",
                                 "synonyms": [
+                                    "any random",
                                     "your best",
                                     "anything",
-                                    "most popular",
-                                    "highest rated",
-                                    "the best",
                                     "some good",
                                     "random"
                                 ]
@@ -314,6 +370,8 @@
                             "name": {
                                 "value": "horror",
                                 "synonyms": [
+                                    "horrors",
+                                    "horrific",
                                     "scary"
                                 ]
                             }
@@ -321,7 +379,10 @@
                         {
                             "id": "53",
                             "name": {
-                                "value": "thriller"
+                                "value": "thriller",
+                                "synonyms": [
+                                    "thrillers"
+                                ]
                             }
                         },
                         {
@@ -329,6 +390,7 @@
                             "name": {
                                 "value": "romantic",
                                 "synonyms": [
+                                    "romantic type",
                                     "romcom",
                                     "romance"
                                 ]
@@ -337,53 +399,15 @@
                         {
                             "id": "28",
                             "name": {
-                                "value": "action"
+                                "value": "action",
+                                "synonyms": [
+                                    "actions"
+                                ]
                             }
                         }
                     ]
                 }
             ]
-        },
-        "dialog": {
-            "intents": [
-                {
-                    "name": "movieIntent",
-                    "confirmationRequired": false,
-                    "prompts": {},
-                    "slots": [
-                        {
-                            "name": "genre",
-                            "type": "genre",
-                            "confirmationRequired": false,
-                            "elicitationRequired": true,
-                            "prompts": {
-                                "elicitation": "Elicit.Slot.1034290430738.1048200650141"
-                            }
-                        }
-                    ]
-                }
-            ],
-            "delegationStrategy": "ALWAYS"
-        },
-        "prompts": [
-            {
-                "id": "Elicit.Slot.1034290430738.1048200650141",
-                "variations": [
-                    {
-                        "type": "PlainText",
-                        "value": " what kind of movie would you like to watch"
-                    }
-                ]
-            },
-            {
-                "id": "Slot.Validation.1044178324102.362545589134.613483686106",
-                "variations": [
-                    {
-                        "type": "PlainText",
-                        "value": "I am sorry but I can only recommend movies in Action, Thriller, Comedy, Romance, Horror, Mystery and Crime."
-                    }
-                ]
-            }
-        ]
+        }
     }
 }
