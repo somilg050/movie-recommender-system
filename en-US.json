@@ -37,6 +37,9 @@
                     ],
                     "samples": [
                         "suggest some movies by {actor}",
+                        }
+                    ],
+                    "samples": [
                         "What are the best {genre} that were released {year} ",
                         "best movies from year {year}",
                         "suggest movies from {year}",

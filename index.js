@@ -287,6 +287,7 @@ const SimilarMoviesHandler = {
     });
     outputSpeech += "Would you like to here more?";
     SessionAttributes.count = 4;
+    });
     SessionAttributes.lastStatement = speechText;
     return handlerInput.responseBuilder
       .speak(speechText)
