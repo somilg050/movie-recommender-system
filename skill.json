@@ -1,0 +1,21 @@
+{
+  "manifest": {
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "serverlessrepo-movie-reco-alexaskillskitnodejsfact-1SDEFKETTPWZV",
+          "sourceDir": "lambda/us-east-1_serverlessrepo-movie-reco-alexaskillskitnodejsfact-1SDEFKETTPWZV"
+        },
+        "interfaces": []
+      }
+    },
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "Movie Master"
+        }
+      }
+    }
+  }
+}
